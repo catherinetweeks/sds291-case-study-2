@@ -1,0 +1,6 @@
+---
+title: "Case Study 2"
+author: "Radiah Khan, Catherine Weeks, Mercer Mercer, Nafisa Mohammad"
+format: pdf
+editor: visual
+---
