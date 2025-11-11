@@ -42,8 +42,44 @@ colSums(is.na(wages))
 #Need input on the EDA
 ```
 ```{r}
+# Wrangling the data
+#Average wage in each regions by race
+wages_region_avg_wage <- wages |>
+  select(Wage, Black, Region) |>
+  group_by(Region, Black) |>
+  summarise(avg_wage_region = mean(Wage, na.rm = TRUE))|>
+  ungroup()
+wages_region_avg_wage
+```
+```{r}
+#Just has the experience group
+wages_exp_group <- wages |>
+  mutate(exp_group = case_when(
+    Experience < 11 ~ "0–10",
+    Experience < 21 ~ "11–20",
+    Experience < 31 ~ "21-30",
+    Experience < 41 ~ "31-40",
+    Experience < 51 ~ "41-50",
+    TRUE     ~ "50+"
+  ))
+wages_exp_group
+  
+```
+```{r}
+#Exp group + region
+wages_exp_group_region <- wages_exp_group |>
+  group_by(Region, Black, exp_group) |>
+  summarise(avg_wage_region = mean(Wage, na.rm = TRUE))|>
+  ungroup()
+wages_exp_group_region
+  
+```
+
+```{r}
+unique(wages$Experience)
 
 ```
+
 
 ```{r}
 #MLM model 
