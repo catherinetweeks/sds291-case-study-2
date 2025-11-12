@@ -21,7 +21,7 @@ execute:
 ---
 ```{r}
 library(tidyverse)
-library(glance)
+#library(glance)
 library(ggplot2)
 ```
 ```{r, include=FALSE}
@@ -85,5 +85,42 @@ unique(wages$Experience)
 #MLM model 
 mlm_model <- lm(Wage ~ Education + Black + Experience + Region, data = wages)
 summary(mlm_model)
+```
+
+
+```{r}
+#get averages of education per region
+wages_edu_group_region <- wages |>
+  group_by(Region, Black) |>
+  summarise(avg_education = mean(Education, na.rm = TRUE)) |>
+  ungroup()
+wages_edu_group_region
+
+```
+
+
+```{r}
+library(RColorBrewer)
+
+ggplot(wages_edu_group_region, aes(x = avg_education, y = Region, fill = Black)) +
+  geom_col() +
+  facet_wrap(~ Black) +
+  labs(
+    title = "Average Education by Region and Race, USA",
+    x = "Average Education (in Years of Schooling)",
+    y = "Region"
+  ) +
+  scale_fill_brewer(palette = "Set1") + 
+  theme_minimal() +
+  theme(
+    axis.line.y = element_blank(),
+    axis.line.x = element_blank(),
+    axis.title.x = element_text(face = "bold"),
+    axis.title.y = element_text(face = "bold"),
+    plot.title = element_text(face = "bold"),
+    legend.title = element_text(face = "bold"),
+    strip.background = element_blank(),
+    strip.text = element_blank()
+  ) + coord_flip()
 ```
 
