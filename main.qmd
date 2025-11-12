@@ -87,3 +87,29 @@ mlm_model <- lm(Wage ~ Education + Black + Experience + Region, data = wages)
 summary(mlm_model)
 ```
 
+
+
+
+```{r}
+#creating new labels for the facet wrapped variables 
+graph.labels <- c("Yes"="Black","No" = "Non-Black")
+
+#plotting a graph exploring Avg pay by region faceted by race
+wages_region_avg_wage |> ggplot(aes(x=avg_wage_region, y = Region)) +geom_col()+ facet_grid(~Black,labeller = labeller(Black = graph.labels) )+coord_flip() +labs(title = "Average Pay in Each USA Region by Race", x= "Average Weekly Wage")+ theme_bw()
+```
+
+
+
+```{r}
+library(knitr)
+#Saving summary table of wages data
+wages_summary <-summary(wages)
+
+#printing the summary table created above with captions.
+kable(wages_summary, 
+      caption = "Summary of Wages")
+
+
+```
+
+
