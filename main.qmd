@@ -19,7 +19,7 @@ execute:
   message: false
   warning: false
 ---
-```{r}
+```{r, include= FALSE}
 library(tidyverse)
 library(glance)
 library(ggplot2)
@@ -29,19 +29,19 @@ library(Sleuth2)
 wages <- Sleuth2::ex1029
 wages
 ```
-```{r}
+```{r, include=FALSE}
 #no na values
 sum(is.na(wages))
 colSums(is.na(wages))
 ```
-```{r} 
+```{r, include=FALSE} 
 #EDA Potential 
 # - (Wage and Race)
 # - (Wage by regions)
 # Have a combined plot on that if needed for the research question
 #Need input on the EDA
 ```
-```{r}
+```{r, include=FALSE}
 # Wrangling the data
 #Average wage in each regions by race
 wages_region_avg_wage <- wages |>
@@ -51,32 +51,45 @@ wages_region_avg_wage <- wages |>
   ungroup()
 wages_region_avg_wage
 ```
-```{r}
+```{r, include=FALSE}
 #Just has the experience group
 wages_exp_group <- wages |>
   mutate(exp_group = case_when(
-    Experience < 11 ~ "0–10",
-    Experience < 21 ~ "11–20",
-    Experience < 31 ~ "21-30",
-    Experience < 41 ~ "31-40",
-    Experience < 51 ~ "41-50",
-    TRUE     ~ "50+"
+    Experience < 21 ~ "0–20",
+    Experience < 41 ~ "20–40",
+    Experience < 61 ~ "41-60",
+  
+    TRUE     ~ "60+"
   ))
 wages_exp_group
   
 ```
-```{r}
+```{r, include=FALSE}
 #Exp group + region
 wages_exp_group_region <- wages_exp_group |>
-  group_by(Region, Black, exp_group) |>
-  summarise(avg_wage_region = mean(Wage, na.rm = TRUE))|>
-  ungroup()
-wages_exp_group_region
+  mutate(Race = ifelse(Black == "Yes", "Black", "Non-Black")) |>
+  group_by(Region, Race, exp_group) |>
+  summarise(avg_wage = mean(Wage, na.rm = TRUE), .groups = "drop")
+
   
+
 ```
 
-```{r}
-unique(wages$Experience)
+```{r, echo= FALSE}
+#Plotting EDA (Exp group and avg wage by race)
+#The region plot looks really condensed 
+ggplot(wages_exp_group_region, 
+       aes(x = exp_group, y = avg_wage, fill = Race)) +
+  geom_col(position = position_dodge(width = 0.7)) +
+  facet_wrap(~ Region) +
+  labs(title = "Average Wage by Experience Group among Races",
+       x = "Experience Group (years)",
+       y = "Average Wage") +
+  coord_flip() +
+  scale_fill_brewer(palette = "Paired") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+
 
 ```
 
