@@ -21,7 +21,6 @@ execute:
 ---
 ```{r}
 library(tidyverse)
-library(glance)
 library(ggplot2)
 ```
 ```{r, include=FALSE}
@@ -82,8 +81,19 @@ unique(wages$Experience)
 
 
 ```{r}
+#factoring the categorical variables in the wage data set
+wages$Black <- factor(wages$Black)
+wages$Region <- factor(wages$Region)
+
+#setting the new reference level
+wages$Black <- relevel(wages$Black, ref = "No")
+
+```
+
+
+```{r}
 #MLM model 
-mlm_model <- lm(Wage ~ Education + Black + Experience + Region, data = wages)
+mlm_model <- lm(Wage ~ Education  + Experience + Black * Region, data = wages)
 summary(mlm_model)
 ```
 
@@ -95,9 +105,8 @@ summary(mlm_model)
 graph.labels <- c("Yes"="Black","No" = "Non-Black")
 
 #plotting a graph exploring Avg pay by region faceted by race
-wages_region_avg_wage |> ggplot(aes(x=avg_wage_region, y = Region)) +geom_col()+ facet_grid(~Black,labeller = labeller(Black = graph.labels) )+coord_flip() +labs(title = "Average Pay in Each USA Region by Race", x= "Average Weekly Wage")+ theme_bw()
+wages_region_avg_wage |> ggplot(aes(x=avg_wage_region, y = Region, fill = Black)) +geom_col()+ facet_grid(~Black,labeller = labeller(Black = graph.labels) )+coord_flip() +labs(title = "Average Pay in Each USA Region by Race", x= "Average Weekly Wage")+ theme_bw()
 ```
-
 
 
 ```{r}
