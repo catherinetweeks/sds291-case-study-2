@@ -22,6 +22,7 @@ execute:
 ```{r}
 library(tidyverse)
 library(ggplot2)
+library(broom)
 ```
 ```{r, include=FALSE}
 library(Sleuth2)
@@ -92,11 +93,68 @@ wages$Black <- relevel(wages$Black, ref = "No")
 
 
 ```{r}
-#MLM model 
-mlm_model <- lm(Wage ~ Education  + Experience + Black * Region, data = wages)
+#MLM model
+mlm_model_untransformed <- lm(Wage ~ Education  + Experience + Black * Region, data = wages)
 summary(mlm_model)
 ```
 
+
+```{r}
+# Checking Linearity and Equal Variance
+ggplot(mlm_model_untransformed |> augment(), aes(x = .fitted, y = .resid))+
+  geom_point()+
+  geom_hline(yintercept = 0, col = "red")+
+  labs(title = "Scatterplot for residuals values in correlation to Fitted Values",
+       x = "Fitted Results",
+       y = "Residuals")
+```
+
+```{r}
+# Checking for the normality condition
+mlm_model_untransformed |>
+  augment() |> ggplot(aes(sample = .resid)) + geom_qq() +
+  geom_qq_line() +
+  labs(title = "Scatterplot to display the Normaility ", x = "Quantilies", y = "Sample Outcomes")
+```
+
+
+
+```{r}
+#MLM model with log scaled y axis
+mlm_model <- lm(log(Wage) ~ Education  + Experience + Black * Region, data = wages)
+summary(mlm_model)
+```
+
+
+```{r}
+# Checking Linearity and Equal Variance
+ggplot(mlm_model |> augment(), aes(x = .fitted, y = .resid))+
+  geom_point()+
+  geom_hline(yintercept = 0, col = "red")+
+  labs(title = "Scatterplot for residuals values in correlation to Fitted Values",
+       x = "Fitted Results",
+       y = "Residuals")
+```
+
+```{r}
+# Checking for the normality condition
+mlm_model |>
+  augment() |> ggplot(aes(sample = .resid)) + geom_qq() +
+  geom_qq_line() +
+  labs(title = "Scatterplot to display the Normaility ", x = "Quantilies", y = "Sample Outcomes")
+```
+
+```{r}
+wages_reduced_model <- lm(log(Wage) ~ Education + Experience + Black + Region, data = wages)
+summary(wages_reduced_model)
+```
+
+
+```{r}
+
+anova(wages_reduced_model,mlm_model)
+
+```
 
 
 
@@ -107,6 +165,7 @@ graph.labels <- c("Yes"="Black","No" = "Non-Black")
 #plotting a graph exploring Avg pay by region faceted by race
 wages_region_avg_wage |> ggplot(aes(x=avg_wage_region, y = Region, fill = Black)) +geom_col()+ facet_grid(~Black,labeller = labeller(Black = graph.labels) )+coord_flip() +labs(title = "Average Pay in Each USA Region by Race", x= "Average Weekly Wage")+ theme_bw()
 ```
+
 
 
 ```{r}
