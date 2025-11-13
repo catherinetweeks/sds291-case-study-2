@@ -19,39 +19,35 @@ execute:
   message: false
   warning: false
 ---
+
+## Introduction
+
+## Data Description
+
+In this case study, we are working with the ex1029 data set available in the Sleuth2 library. This data set represents a sample of 25,632 male respondents to the March 1988 U.S. Current Population Survey that is administered monthly by the U.S. Census Bureau.
+
 ```{r, include= FALSE}
 library(tidyverse)
 library(ggplot2)
 library(broom)
 library(flextable)
-```
-```{r, include=FALSE}
 library(Sleuth2)
 wages <- Sleuth2::ex1029
 wages
 ```
+
+### Data Wrangling
+
+Before analysis, we checked how many missing observations were present in this data set. Using the `is.na()` and `colSums()` functions, we confirmed that there were no missing observations, so no rows were removed and therefore the dataset used in our analysis contains 25,632 complete observations.
+
 ```{r, include=FALSE}
-#no na values
+#Check for n/a values
 sum(is.na(wages))
 colSums(is.na(wages))
 ```
-```{r, include=FALSE} 
-#EDA Potential 
-# - (Wage and Race)
-# - (Wage by regions)
-# Have a combined plot on that if needed for the research question
-#Need input on the EDA
-```
-```{r, include=FALSE}
-# Wrangling the data
-#Average wage in each regions by race
-wages_region_avg_wage <- wages |>
-  select(Wage, Black, Region) |>
-  group_by(Region, Black) |>
-  summarise(avg_wage_region = mean(Wage, na.rm = TRUE))|>
-  ungroup()
-wages_region_avg_wage
-```
+
+To further prepare for visualization and modeling, a new categorical variable, `exp_group` was created by grouping `Experience` into four intervals: 0-20 years, 21-40 years, 41-60 years, and 60+ years of experience.
+
 ```{r, include=FALSE}
 #Just has the experience group
 wages_exp_group <- wages |>
@@ -63,18 +59,38 @@ wages_exp_group <- wages |>
     TRUE     ~ "60+"
   ))
 wages_exp_group
-  
 ```
+
+To visualize regional differences, we computed the average weekly wage by region and race and the average education level by region and race.
+
+```{r, include=FALSE}
+# Wrangling the data
+#Average wage in each regions by race
+wages_region_avg_wage <- wages |>
+  select(Wage, Black, Region) |>
+  group_by(Region, Black) |>
+  summarise(avg_wage_region = mean(Wage, na.rm = TRUE))|>
+  ungroup()
+wages_region_avg_wage
+```
+
+```{r, include=FALSE}
+#EDA Potential 
+# - (Wage and Race)
+# - (Wage by regions)
+# Have a combined plot on that if needed for the research question
+#Need input on the EDA
+```
+
 ```{r, include=FALSE}
 #Exp group + region
 wages_exp_group_region <- wages_exp_group |>
   mutate(Race = ifelse(Black == "Yes", "Black", "Non-Black")) |>
   group_by(Region, Race, exp_group) |>
   summarise(avg_wage = mean(Wage, na.rm = TRUE), .groups = "drop")
-
-  
-
 ```
+
+The visualization below shows how average wages increase with experience across all regions and that Black respondents consistently earn lower wages than non-Black respondents.
 
 ```{r, echo= FALSE}
 #Plotting EDA (Exp group and avg wage by race)
@@ -90,10 +106,11 @@ ggplot(wages_exp_group_region,
   scale_fill_brewer(palette = "Paired") +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5, face = "bold"))
-
-
 ```
 
+#### Preparing for Regression Analysis
+
+Before modeling, we converted our categorical variables to factors and set the "No" level of Black as the reference category.
 
 ```{r}
 #factoring the categorical variables in the wage data set
@@ -102,15 +119,14 @@ wages$Region <- factor(wages$Region)
 
 #setting the new reference level
 wages$Black <- relevel(wages$Black, ref = "No")
-
 ```
-
 
 ```{r, include=FALSE}
 #MLM model
 mlm_model_untransformed <- lm(Wage ~ Education  + Experience + Black * Region, data = wages)
 summary(mlm_model_untransformed)
 ```
+
 ```{r, echo=FALSE}
 #Prettifying it by adding tables : Making it a data frame first to table it
 mlm_untransformed_df <- tidy(mlm_model_untransformed, conf.int = TRUE)
@@ -119,7 +135,6 @@ flextable(mlm_untransformed_df)|>
   autofit()|>
   theme_apa()
 ```
-
 
 ```{r}
 # Checking Linearity and Equal Variance
@@ -144,14 +159,13 @@ mlm_model_untransformed |>
     theme(plot.title = element_text(hjust = 0.5, face = "bold"))
 ```
 
-
-
 ```{r, echo= FALSE}
 #MLM model with log scaled y axis
 mlm_model <- lm(log(Wage) ~ Education  + Experience + Black * Region, data = wages)
 summary(mlm_model)
 
 ```
+
 ```{r}
 #Prettifying it 
 mlm_transformed_df <- tidy(mlm_model, conf.int = TRUE)
@@ -160,7 +174,6 @@ flextable(mlm_transformed_df)|>
   autofit()|>
   theme_apa()
 ```
-
 
 ```{r}
 # Checking Linearity and Equal Variance
@@ -189,6 +202,7 @@ wages_reduced_model <- lm(log(Wage) ~ Education + Experience + Black + Region, d
 summary(wages_reduced_model)
 
 ```
+
 ```{r, echo=FALSE}
 wages_reduced_df <- tidy(wages_reduced_model, conf.int = TRUE)
 flextable(wages_reduced_df)|>
@@ -201,7 +215,6 @@ flextable(wages_reduced_df)|>
 f_results <- anova(wages_reduced_model,mlm_model)
 f_results
 ```
-
 
 ```{r}
 anova_df <- as.data.frame(f_results)
@@ -222,7 +235,8 @@ wages_region_avg_wage |> ggplot(aes(x=avg_wage_region, y = Region, fill = Black)
   coord_flip() +labs(title = "Average Pay in Each USA Region by Race", x= "Average Weekly Wage")+
   theme_bw()
 ```
-#Region does not affect wages in races --> then the question is not if race affects wage, it is if region affects the wage gap
+
+#Region does not affect wages in races --\> then the question is not if race affects wage, it is if region affects the wage gap
 
 ```{r}
 library(knitr)
@@ -238,22 +252,21 @@ wages_df <- as.data.frame(wages_summary)
   #theme_apa()
 ```
 
+Graph for Average Education by Region and Race, USA
 
-Graph for Average Education by Region and Race, USA: 
 ```{r}
+
 #get averages of education per region
 wages_edu_group_region <- wages |>
   group_by(Region, Black) |>
-  summarise(avg_education = mean(Education, na.rm = TRUE)) |>
+  summarise(avg_education = mean(Education)) |>
   ungroup()
-```
 
-```{r}
-library(RColorBrewer)
+graph.labels <- c("Yes"="Black","No" = "Non-Black")
 
 ggplot(wages_edu_group_region, aes(x = avg_education, y = Region, fill = Black)) +
   geom_col() +
-  facet_grid(~Black,labeller = labeller(Black = graph.labels)) +
+  facet_grid(~Black,labeller = labeller(Black = graph.labels) )+
   labs(
     title = "Average Education by Region and Race, USA",
     x = "Average Education (in Years of Schooling)",
@@ -264,9 +277,5 @@ ggplot(wages_edu_group_region, aes(x = avg_education, y = Region, fill = Black))
     plot.title = element_text(hjust = 0.5, face = "bold"),
     axis.line.y = element_blank(),
     axis.line.x = element_blank(),
-    strip.background = element_blank(),
-    strip.text = element_blank()
   ) + coord_flip()
 ```
-
-
