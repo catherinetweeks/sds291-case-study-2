@@ -23,6 +23,7 @@ execute:
 library(tidyverse)
 library(ggplot2)
 library(broom)
+library(flextable)
 ```
 ```{r, include=FALSE}
 library(Sleuth2)
@@ -105,10 +106,18 @@ wages$Black <- relevel(wages$Black, ref = "No")
 ```
 
 
-```{r}
+```{r, include=FALSE}
 #MLM model
 mlm_model_untransformed <- lm(Wage ~ Education  + Experience + Black * Region, data = wages)
-summary(mlm_model)
+summary(mlm_model_untransformed)
+```
+```{r, echo=FALSE}
+#Prettifying it by adding tables : Making it a data frame first to table it
+mlm_untransformed_df <- tidy(mlm_model_untransformed, conf.int = TRUE)
+flextable(mlm_untransformed_df)|>
+  set_caption("Regression Summary of the Untransformed Model: Predicting Wage")|>
+  autofit()|>
+  theme_apa()
 ```
 
 
@@ -117,9 +126,12 @@ summary(mlm_model)
 ggplot(mlm_model_untransformed |> augment(), aes(x = .fitted, y = .resid))+
   geom_point()+
   geom_hline(yintercept = 0, col = "red")+
-  labs(title = "Scatterplot for residuals values in correlation to Fitted Values",
-       x = "Fitted Results",
-       y = "Residuals")
+  labs(title = "Residual Plot (Untransformed Model)" ,
+       x = "Fitted Value",
+       y = "Residuals")+
+  theme_minimal()+
+    theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+
 ```
 
 ```{r}
@@ -127,15 +139,26 @@ ggplot(mlm_model_untransformed |> augment(), aes(x = .fitted, y = .resid))+
 mlm_model_untransformed |>
   augment() |> ggplot(aes(sample = .resid)) + geom_qq() +
   geom_qq_line() +
-  labs(title = "Scatterplot to display the Normaility ", x = "Quantilies", y = "Sample Outcomes")
+  labs(title = "Q-Q Plot (Untransformed Model) ", x = "Quantilies", y = "Sample Outcomes") + 
+  theme_minimal()+
+    theme(plot.title = element_text(hjust = 0.5, face = "bold"))
 ```
 
 
 
-```{r}
+```{r, echo= FALSE}
 #MLM model with log scaled y axis
 mlm_model <- lm(log(Wage) ~ Education  + Experience + Black * Region, data = wages)
 summary(mlm_model)
+
+```
+```{r}
+#Prettifying it 
+mlm_transformed_df <- tidy(mlm_model, conf.int = TRUE)
+flextable(mlm_transformed_df)|>
+  set_caption("Regression Summary of the Transformed Model: Predicting Wage")|>
+  autofit()|>
+  theme_apa()
 ```
 
 
@@ -144,9 +167,11 @@ summary(mlm_model)
 ggplot(mlm_model |> augment(), aes(x = .fitted, y = .resid))+
   geom_point()+
   geom_hline(yintercept = 0, col = "red")+
-  labs(title = "Scatterplot for residuals values in correlation to Fitted Values",
-       x = "Fitted Results",
-       y = "Residuals")
+  labs(title = "Residual Plot (Transformed Model)",
+       x = "Fitted",
+       y = "Residuals") + 
+  theme_minimal()+
+    theme(plot.title = element_text(hjust = 0.5, face = "bold"))
 ```
 
 ```{r}
@@ -154,22 +179,37 @@ ggplot(mlm_model |> augment(), aes(x = .fitted, y = .resid))+
 mlm_model |>
   augment() |> ggplot(aes(sample = .resid)) + geom_qq() +
   geom_qq_line() +
-  labs(title = "Scatterplot to display the Normaility ", x = "Quantilies", y = "Sample Outcomes")
+  labs(title = "Q-Q Plot (Transformed model) ", x = "Quantilies", y = "Sample Outcomes") + 
+  theme_minimal()+
+    theme(plot.title = element_text(hjust = 0.5, face = "bold"))
 ```
 
-```{r}
+```{r, include= FALSE}
 wages_reduced_model <- lm(log(Wage) ~ Education + Experience + Black + Region, data = wages)
 summary(wages_reduced_model)
+
+```
+```{r, echo=FALSE}
+wages_reduced_df <- tidy(wages_reduced_model, conf.int = TRUE)
+flextable(wages_reduced_df)|>
+  set_caption("Regression Summary of the Reduced Model: Predicting Wage")|>
+  autofit()|>
+  theme_apa()
+```
+
+```{r}
+f_results <- anova(wages_reduced_model,mlm_model)
+f_results
 ```
 
 
 ```{r}
-
-anova(wages_reduced_model,mlm_model)
-
+anova_df <- as.data.frame(f_results)
+flextable(anova_df)|>
+  set_caption("F-test Result Summary")|>
+  autofit()|>
+  theme_apa()
 ```
-
-
 
 ```{r}
 #creating new labels for the facet wrapped variables 
@@ -178,19 +218,21 @@ graph.labels <- c("Yes"="Black","No" = "Non-Black")
 #plotting a graph exploring Avg pay by region faceted by race
 wages_region_avg_wage |> ggplot(aes(x=avg_wage_region, y = Region, fill = Black)) +geom_col()+ facet_grid(~Black,labeller = labeller(Black = graph.labels) )+coord_flip() +labs(title = "Average Pay in Each USA Region by Race", x= "Average Weekly Wage")+ theme_bw()
 ```
-
-
+#Region does not affect wages in races --> then the question is not if race affects wage, it is if region affects the wage gap
 
 ```{r}
 library(knitr)
 #Saving summary table of wages data
 wages_summary <-summary(wages)
+wages_df <- as.data.frame(wages_summary)
+
 
 #printing the summary table created above with captions.
-kable(wages_summary, 
-      caption = "Summary of Wages")
-
-
+#flextable(wages_df)|>
+  #set_caption("Wage Summary")|>
+  #autofit()|>
+  #theme_apa()
 ```
+
 
 
