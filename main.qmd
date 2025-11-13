@@ -24,7 +24,13 @@ execute:
 
 ## Data Description
 
-In this case study, we are working with the ex1029 data set available in the Sleuth2 library. This data set represents a sample of 25,632 male respondents to the March 1988 U.S. Current Population Survey that is administered monthly by the U.S. Census Bureau.
+In this case study, we are working with the ex1029 data set available in the Sleuth2 library. This data set represents a sample of 25,632 male respondents to the March 1988 U.S. Current Population Survey that is administered monthly by the U.S. Census Bureau. The variables include:
+
+-   `Wage` Weekly wage in 1992 USD
+-   `Education` Years of education
+-   `Experience` Years of work experience
+-   `Black` Indicator of whether the respondent was black (yes or no)
+-   `Region` Region of residence (Northeast, Midwest, South or West)
 
 ```{r, include= FALSE}
 library(tidyverse)
