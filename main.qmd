@@ -1,5 +1,5 @@
 ---
-title: "Does Region Shapes the Wage Gap Between Black and Non-Black Male Workers"
+title: "Does Region Shapes the Wage Gap Between Black and Non-Black Male Workers?"
 subtitle: "Case Study 2"
 author: ""
 date: "November 14, 2024"
