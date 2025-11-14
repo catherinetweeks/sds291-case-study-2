@@ -1,24 +1,24 @@
 ---
-title: "Your Informative Title Here"
-subtitle: "Case Study 2" 
-author:
-  - name: "Radiah Khan"
-  - name: "Catherine Weeks" 
-  - name: "Mercer Mercer"
-  - name : "Nafisa Mohammad"
-date: November 14
-format: 
+title: "Does Region Shapes the Wage Gap Between Black and Non-Black Male Workers"
+subtitle: "Case Study 2"
+author: ""
+date: "November 14, 2024"
+format:
   pdf:
-    geometry: 
+    geometry:
       - left=1in
       - right=1in
       - top=1in
       - bottom=1in
-execute: 
+execute:
   echo: true
   message: false
   warning: false
 ---
+<div style="text-align:center; font-size:1.2em; margin-top:1em;">
+Radiah Khan · Catherine Weeks · Mercer Mercer · Nafisa Mohammad
+</div>
+
 
 ## Introduction
 
