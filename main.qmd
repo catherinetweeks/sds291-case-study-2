@@ -116,7 +116,7 @@ ggplot(wages_exp_group_region,
 
 #### Preparing for Regression Analysis
 
-Before modeling, we converted our categorical variables to factors and set the "No" level of Black as the reference category.
+Before modeling, we convert the Black and Region columns into categorical variables. The relevel call sets "No" as the baseline group so model coefficients for Black compare other levels to non‑Black respondents.
 
 ```{r}
 #factoring the categorical variables in the wage data set
@@ -126,6 +126,8 @@ wages$Region <- factor(wages$Region)
 #setting the new reference level
 wages$Black <- relevel(wages$Black, ref = "No")
 ```
+
+We fits a multiple regression model predicting Wage using Education, Experience, Black, Region, and the Black-by-Region interaction. Then prints the summary of the model results.
 
 ```{r, include=FALSE}
 #MLM model
@@ -142,6 +144,8 @@ flextable(mlm_untransformed_df)|>
   theme_apa()
 ```
 
+The following two graphs are checking key regression assumptions to see if our model violates the usual conditions for valid inference. The residuals vs. fitted plot checks linearity and equal variance: we want the residuals scattered randomly around zero with no clear curve and roughly the same vertical spread across the range of fitted values (a funnel shape indicates heteroscedasticity). 
+
 ```{r}
 # Checking Linearity and Equal Variance
 ggplot(mlm_model_untransformed |> augment(), aes(x = .fitted, y = .resid))+
@@ -155,6 +159,7 @@ ggplot(mlm_model_untransformed |> augment(), aes(x = .fitted, y = .resid))+
 
 ```
 
+
 ```{r}
 # Checking for the normality condition
 mlm_model_untransformed |>
@@ -165,12 +170,15 @@ mlm_model_untransformed |>
     theme(plot.title = element_text(hjust = 0.5, face = "bold"))
 ```
 
+The Q–Q plot checks whether the residuals are approximately Normal: points should lie close to the reference line; If points pull away from the line, it suggests the residuals aren’t following a normal pattern. That matters because our standard errors, confidence intervals, and p-values assume normal residuals. Therefore, if the assumption is false, those numbers can be misleading. Thus, we will perform log transformation on our response variable in our case will be the Wage.
+
 ```{r, echo= FALSE}
 #MLM model with log scaled y axis
 mlm_model <- lm(log(Wage) ~ Education  + Experience + Black * Region, data = wages)
 summary(mlm_model)
 
 ```
+
 
 ```{r}
 #Prettifying it 
@@ -202,6 +210,11 @@ mlm_model |>
   theme_minimal()+
     theme(plot.title = element_text(hjust = 0.5, face = "bold"))
 ```
+
+
+Untransformed model: the residuals vs fitted plot had a clear pattern that the residuals followed showing that there was no random scattering for the residuals. This indicates that the residuals got larger as fitted values increased. In addition, a few points stuck way above the rest clearly showing that the residuals were not centered at zero. The Q–Q plot showed a strong right‑side hook, meaning the residuals had a heavy right tail. It's important to point out that the residuals that fell above the refernce line were big numbers. In summary, the errors were uneven and skewed, so the model was being pulled by a few very large wages.
+
+Transformed model (log Wage): the residuals vs fitted plot now looks evenly distributed with residuals centered on zero with similar spread across fitted values (no obvious shape pattern). The Q–Q plot is also much closer to the straight line, so residuals are more like a Normal distribution. With these improvements our transformed model now meets the usual regression assumptions (linearity, equal variance, normality). With our model now better fitted we can now move on to proofing our research question.
 
 ```{r, include= FALSE}
 wages_reduced_model <- lm(log(Wage) ~ Education + Experience + Black + Region, data = wages)
