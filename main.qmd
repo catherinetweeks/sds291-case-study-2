@@ -1,56 +1,59 @@
 ---
-title: "Your Informative Title Here"
-subtitle: "Case Study 2" 
-author:
-  - name: "Radiah Khan"
-  - name: "Catherine Weeks" 
-  - name: "Mercer Mercer"
-  - name : "Nafisa Mohammad"
-date: November 14
-format: 
+title: "Does Region Shapes the Wage Gap Between Black and Non-Black Male Workers"
+subtitle: "Case Study 2"
+author: ""
+date: "November 14, 2024"
+format:
   pdf:
-    geometry: 
+    geometry:
       - left=1in
       - right=1in
       - top=1in
       - bottom=1in
-execute: 
+execute:
   echo: true
   message: false
   warning: false
 ---
+<div style="text-align:center; font-size:1.2em; margin-top:1em;">
+Radiah Khan · Catherine Weeks · Mercer Mercer · Nafisa Mohammad
+</div>
+
+
+## Introduction
+
+## Data Description
+
+In this case study, we are working with the ex1029 data set available in the Sleuth2 library. This data set represents a sample of 25,632 male respondents to the March 1988 U.S. Current Population Survey that is administered monthly by the U.S. Census Bureau. The variables include:
+
+-   `Wage` Weekly wage in 1992 USD
+-   `Education` Years of education
+-   `Experience` Years of work experience
+-   `Black` Indicator of whether the respondent was black (yes or no)
+-   `Region` Region of residence (Northeast, Midwest, South or West)
+
 ```{r, include= FALSE}
 library(tidyverse)
 library(ggplot2)
 library(broom)
-```
-```{r, include=FALSE}
+library(flextable)
 library(Sleuth2)
 wages <- Sleuth2::ex1029
 wages
 ```
+
+### Data Wrangling
+
+Before analysis, we checked how many missing observations were present in this data set. Using the `is.na()` and `colSums()` functions, we confirmed that there were no missing observations, so no rows were removed and therefore the dataset used in our analysis contains 25,632 complete observations.
+
 ```{r, include=FALSE}
-#no na values
+#Check for n/a values
 sum(is.na(wages))
 colSums(is.na(wages))
 ```
-```{r, include=FALSE} 
-#EDA Potential 
-# - (Wage and Race)
-# - (Wage by regions)
-# Have a combined plot on that if needed for the research question
-#Need input on the EDA
-```
-```{r, include=FALSE}
-# Wrangling the data
-#Average wage in each regions by race
-wages_region_avg_wage <- wages |>
-  select(Wage, Black, Region) |>
-  group_by(Region, Black) |>
-  summarise(avg_wage_region = mean(Wage, na.rm = TRUE))|>
-  ungroup()
-wages_region_avg_wage
-```
+
+To further prepare for visualization and modeling, a new categorical variable, `exp_group` was created by grouping `Experience` into four intervals: 0-20 years, 21-40 years, 41-60 years, and 60+ years of experience.
+
 ```{r, include=FALSE}
 #Just has the experience group
 wages_exp_group <- wages |>
@@ -62,18 +65,38 @@ wages_exp_group <- wages |>
     TRUE     ~ "60+"
   ))
 wages_exp_group
-  
 ```
+
+To visualize regional differences, we computed the average weekly wage by region and race and the average education level by region and race.
+
+```{r, include=FALSE}
+# Wrangling the data
+#Average wage in each regions by race
+wages_region_avg_wage <- wages |>
+  select(Wage, Black, Region) |>
+  group_by(Region, Black) |>
+  summarise(avg_wage_region = mean(Wage, na.rm = TRUE))|>
+  ungroup()
+wages_region_avg_wage
+```
+
+```{r, include=FALSE}
+#EDA Potential 
+# - (Wage and Race)
+# - (Wage by regions)
+# Have a combined plot on that if needed for the research question
+#Need input on the EDA
+```
+
 ```{r, include=FALSE}
 #Exp group + region
 wages_exp_group_region <- wages_exp_group |>
   mutate(Race = ifelse(Black == "Yes", "Black", "Non-Black")) |>
   group_by(Region, Race, exp_group) |>
   summarise(avg_wage = mean(Wage, na.rm = TRUE), .groups = "drop")
-
-  
-
 ```
+
+The visualization below shows how average wages increase with experience across all regions and that Black respondents consistently earn lower wages than non-Black respondents.
 
 ```{r, echo= FALSE}
 #Plotting EDA (Exp group and avg wage by race)
@@ -89,10 +112,11 @@ ggplot(wages_exp_group_region,
   scale_fill_brewer(palette = "Paired") +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5, face = "bold"))
-
-
 ```
 
+#### Preparing for Regression Analysis
+
+Before modeling, we convert the Black and Region columns into categorical variables. The relevel call sets "No" as the baseline group so model coefficients for Black compare other levels to non‑Black respondents.
 
 ```{r}
 #factoring the categorical variables in the wage data set
@@ -101,52 +125,80 @@ wages$Region <- factor(wages$Region)
 
 #setting the new reference level
 wages$Black <- relevel(wages$Black, ref = "No")
-
 ```
 
+We fits a multiple regression model predicting Wage using Education, Experience, Black, Region, and the Black-by-Region interaction. Then prints the summary of the model results.
 
-```{r}
+```{r, include=FALSE}
 #MLM model
 mlm_model_untransformed <- lm(Wage ~ Education  + Experience + Black * Region, data = wages)
-summary(mlm_model)
+summary(mlm_model_untransformed)
 ```
 
+```{r, echo=FALSE}
+#Prettifying it by adding tables : Making it a data frame first to table it
+mlm_untransformed_df <- tidy(mlm_model_untransformed, conf.int = TRUE)
+flextable(mlm_untransformed_df)|>
+  set_caption("Regression Summary of the Untransformed Model: Predicting Wage")|>
+  autofit()|>
+  theme_apa()
+```
+
+The following two graphs are checking key regression assumptions to see if our model violates the usual conditions for valid inference. The residuals vs. fitted plot checks linearity and equal variance: we want the residuals scattered randomly around zero with no clear curve and roughly the same vertical spread across the range of fitted values (a funnel shape indicates heteroscedasticity). 
 
 ```{r}
 # Checking Linearity and Equal Variance
 ggplot(mlm_model_untransformed |> augment(), aes(x = .fitted, y = .resid))+
   geom_point()+
   geom_hline(yintercept = 0, col = "red")+
-  labs(title = "Scatterplot for residuals values in correlation to Fitted Values",
-       x = "Fitted Results",
-       y = "Residuals")
+  labs(title = "Residual Plot (Untransformed Model)" ,
+       x = "Fitted Value",
+       y = "Residuals")+
+  theme_minimal()+
+    theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+
 ```
+
 
 ```{r}
 # Checking for the normality condition
 mlm_model_untransformed |>
   augment() |> ggplot(aes(sample = .resid)) + geom_qq() +
   geom_qq_line() +
-  labs(title = "Scatterplot to display the Normaility ", x = "Quantilies", y = "Sample Outcomes")
+  labs(title = "Q-Q Plot (Untransformed Model) ", x = "Quantilies", y = "Sample Outcomes") + 
+  theme_minimal()+
+    theme(plot.title = element_text(hjust = 0.5, face = "bold"))
 ```
 
+The Q–Q plot checks whether the residuals are approximately Normal: points should lie close to the reference line; If points pull away from the line, it suggests the residuals aren’t following a normal pattern. That matters because our standard errors, confidence intervals, and p-values assume normal residuals. Therefore, if the assumption is false, those numbers can be misleading. Thus, we will perform log transformation on our response variable in our case will be the Wage.
 
-
-```{r}
+```{r, echo= FALSE}
 #MLM model with log scaled y axis
 mlm_model <- lm(log(Wage) ~ Education  + Experience + Black * Region, data = wages)
 summary(mlm_model)
+
 ```
 
+
+```{r}
+#Prettifying it 
+mlm_transformed_df <- tidy(mlm_model, conf.int = TRUE)
+flextable(mlm_transformed_df)|>
+  set_caption("Regression Summary of the Transformed Model: Predicting Wage")|>
+  autofit()|>
+  theme_apa()
+```
 
 ```{r}
 # Checking Linearity and Equal Variance
 ggplot(mlm_model |> augment(), aes(x = .fitted, y = .resid))+
   geom_point()+
   geom_hline(yintercept = 0, col = "red")+
-  labs(title = "Scatterplot for residuals values in correlation to Fitted Values",
-       x = "Fitted Results",
-       y = "Residuals")
+  labs(title = "Residual Plot (Transformed Model)",
+       x = "Fitted",
+       y = "Residuals") + 
+  theme_minimal()+
+    theme(plot.title = element_text(hjust = 0.5, face = "bold"))
 ```
 
 ```{r}
@@ -154,43 +206,95 @@ ggplot(mlm_model |> augment(), aes(x = .fitted, y = .resid))+
 mlm_model |>
   augment() |> ggplot(aes(sample = .resid)) + geom_qq() +
   geom_qq_line() +
-  labs(title = "Scatterplot to display the Normaility ", x = "Quantilies", y = "Sample Outcomes")
+  labs(title = "Q-Q Plot (Transformed model) ", x = "Quantilies", y = "Sample Outcomes") + 
+  theme_minimal()+
+    theme(plot.title = element_text(hjust = 0.5, face = "bold"))
 ```
 
-```{r}
+
+Untransformed model: the residuals vs fitted plot had a clear pattern that the residuals followed showing that there was no random scattering for the residuals. This indicates that the residuals got larger as fitted values increased. In addition, a few points stuck way above the rest clearly showing that the residuals were not centered at zero. The Q–Q plot showed a strong right‑side hook, meaning the residuals had a heavy right tail. It's important to point out that the residuals that fell above the refernce line were big numbers. In summary, the errors were uneven and skewed, so the model was being pulled by a few very large wages.
+
+Transformed model (log Wage): the residuals vs fitted plot now looks evenly distributed with residuals centered on zero with similar spread across fitted values (no obvious shape pattern). The Q–Q plot is also much closer to the straight line, so residuals are more like a Normal distribution. With these improvements our transformed model now meets the usual regression assumptions (linearity, equal variance, normality). With our model now better fitted we can now move on to proofing our research question.
+
+```{r, include= FALSE}
 wages_reduced_model <- lm(log(Wage) ~ Education + Experience + Black + Region, data = wages)
 summary(wages_reduced_model)
+
 ```
 
+```{r, echo=FALSE}
+wages_reduced_df <- tidy(wages_reduced_model, conf.int = TRUE)
+flextable(wages_reduced_df)|>
+  set_caption("Regression Summary of the Reduced Model: Predicting Wage")|>
+  autofit()|>
+  theme_apa()
+```
 
 ```{r}
-
-anova(wages_reduced_model,mlm_model)
-
+f_results <- anova(wages_reduced_model,mlm_model)
+f_results
 ```
 
-
+```{r}
+anova_df <- as.data.frame(f_results)
+flextable(anova_df)|>
+  set_caption("F-test Result Summary")|>
+  autofit()|>
+  theme_apa()
+```
 
 ```{r}
 #creating new labels for the facet wrapped variables 
 graph.labels <- c("Yes"="Black","No" = "Non-Black")
 
 #plotting a graph exploring Avg pay by region faceted by race
-wages_region_avg_wage |> ggplot(aes(x=avg_wage_region, y = Region, fill = Black)) +geom_col()+ facet_grid(~Black,labeller = labeller(Black = graph.labels) )+coord_flip() +labs(title = "Average Pay in Each USA Region by Race", x= "Average Weekly Wage")+ theme_bw()
+wages_region_avg_wage |> ggplot(aes(x=avg_wage_region, y = Region, fill = Black)) + 
+  geom_col()+ 
+  facet_grid(~Black,labeller = labeller(Black = graph.labels) )+
+  coord_flip() +labs(title = "Average Pay in Each USA Region by Race", x= "Average Weekly Wage")+
+  theme_bw()
 ```
 
-
+#Region does not affect wages in races --\> then the question is not if race affects wage, it is if region affects the wage gap
 
 ```{r}
 library(knitr)
 #Saving summary table of wages data
 wages_summary <-summary(wages)
+wages_df <- as.data.frame(wages_summary)
+
 
 #printing the summary table created above with captions.
-kable(wages_summary, 
-      caption = "Summary of Wages")
-
-
+#flextable(wages_df)|>
+  #set_caption("Wage Summary")|>
+  #autofit()|>
+  #theme_apa()
 ```
 
+Graph for Average Education by Region and Race, USA
 
+```{r}
+
+#get averages of education per region
+wages_edu_group_region <- wages |>
+  group_by(Region, Black) |>
+  summarise(avg_education = mean(Education)) |>
+  ungroup()
+
+graph.labels <- c("Yes"="Black","No" = "Non-Black")
+
+ggplot(wages_edu_group_region, aes(x = avg_education, y = Region, fill = Black)) +
+  geom_col() +
+  facet_grid(~Black,labeller = labeller(Black = graph.labels) )+
+  labs(
+    title = "Average Education by Region and Race, USA",
+    x = "Average Education (in Years of Schooling)",
+    y = "Region"
+  ) +
+  theme_bw() +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    axis.line.y = element_blank(),
+    axis.line.x = element_blank(),
+  ) + coord_flip()
+```
