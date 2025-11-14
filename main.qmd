@@ -129,6 +129,12 @@ wages$Black <- relevel(wages$Black, ref = "No")
 
 We fits a multiple regression model predicting Wage using Education, Experience, Black, Region, and the Black-by-Region interaction. Then prints the summary of the model results.
 
+
+$$E[Wage|Education,Experience,Race,Region]= \beta_0 + \beta_1Education \\+ \beta_2Experience+ \beta_3Race +
+\beta_4NorthEast +\beta_5South + \beta_6West \\+ \beta_7Race*NorthEast + \beta_8Race*South \beta_9Race*West$$
+
+Here the variables are Wages representing the weekly wages, Education representing years of education, Experience representing years of experience, Race representing whether a respondent was black our reference level here is non black respondents, and Region being split up into  Northeast, Midwest, South, and West with our reference level set as the Midwest.
+
 ```{r, include=FALSE}
 #MLM model
 mlm_model_untransformed <- lm(Wage ~ Education  + Experience + Black * Region, data = wages)
@@ -178,6 +184,11 @@ mlm_model <- lm(log(Wage) ~ Education  + Experience + Black * Region, data = wag
 summary(mlm_model)
 
 ```
+
+
+$$E[log(wage)|Education,Experience,Race,Region]= \beta_0 + \beta_1Education \\+ \beta_2Experience+ \beta_3Race +
+\beta_4NorthEast +\beta_5South + \beta_6West \\+ \beta_7Race*NorthEast + \beta_8Race*South \beta_9Race*West$$
+
 
 
 ```{r}
