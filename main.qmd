@@ -15,14 +15,14 @@ execute:
   message: false
   warning: false
 ---
-<div style="text-align:center; font-size:1.2em; margin-top:1em;">
-Radiah Khan · Catherine Weeks · Mercer Mercer · Nafisa Mohammad
-</div>
 
+::: {style="text-align:center; font-size:1.2em; margin-top:1em;"}
+Radiah Khan · Catherine Weeks · Mercer Mercer · Nafisa Mohammad
+:::
 
 ## Introduction
-The United States Census Bureau, starting in 1940, has conducted a monthly survey of the labor force known as the Current Population Survey (CPS). The CPS is used to provide current estimates of the economic status. In this Case Study, we aim to address the question. First, were Black males paid less than non-Black males in the same region, with the same levels of education and experience? The motivation behind this question is to determine how racial inequality in the labor force is reflected in wage gaps across the US.
 
+The United States Census Bureau, starting in 1940, has conducted a monthly survey of the labor force known as the Current Population Survey (CPS). The CPS is used to provide current estimates of the economic status. In this Case Study, we aim to address the question. First, were Black males paid less than non-Black males in the same region, with the same levels of education and experience? The motivation behind this question is to determine how racial inequality in the labor force is reflected in wage gaps across the US.
 
 ## Data Description
 
@@ -57,16 +57,13 @@ sum(is.na(wages))
 colSums(is.na(wages))
 ```
 
-
-```{r} 
+```{r}
 wages_summary_table <-summary(wages)
 wages_summary_table
 
 ```
 
-
 To further prepare for visualization and modeling, a new categorical variable, `exp_group` was created by grouping `Experience` into four intervals: 0-20 years, 21-40 years, 41-60 years, and 60+ years of experience.
-
 
 ```{r}
 #Making the exprience years into groups 
@@ -118,7 +115,6 @@ ggplot(wages_exp_group_region,
   theme(plot.title = element_text(hjust = 0.5, face = "bold"))
 ```
 
-
 ```{r}
 #get averages of education per region
 wages_edu_group_region <- wages |>
@@ -126,9 +122,11 @@ wages_edu_group_region <- wages |>
   summarise(avg_education = mean(Education)) |>
   ungroup()
 ```
+
 ```{r, include= FALSE}
 graph.labels <- c("Yes"="Black","No" = "Non-Black")
 ```
+
 ```{r}
 #Graph for Average Education by Region and Race, USA
 ggplot(wages_edu_group_region, aes(x = avg_education, y = Region, fill = Black)) +
@@ -177,7 +175,7 @@ We fits a multiple regression model predicting Wage using Education, Experience,
 $$E[Wage|Education,Experience,Race,Region]= \beta_0 + \beta_1Education \\+ \beta_2Experience+ \beta_3Race +
 \beta_4NorthEast +\beta_5South + \beta_6West \\+ \beta_7Race*NorthEast + \beta_8Race*South \beta_9Race*West$$
 
-Here the variables are Wages representing the weekly wages, Education representing years of education, Experience representing years of experience, Race representing whether a respondent was black our reference level here is non black respondents, and Region being split up into  Northeast, Midwest, South, and West with our reference level set as the Midwest.
+Here the variables are Wages representing the weekly wages, Education representing years of education, Experience representing years of experience, Race representing whether a respondent was black our reference level here is non black respondents, and Region being split up into Northeast, Midwest, South, and West with our reference level set as the Midwest.
 
 ```{r, include=FALSE}
 #MLM model
@@ -192,8 +190,7 @@ flextable(mlm_untransformed_df)|>
   theme_apa()
 ```
 
-
-The following two graphs are checking key regression assumptions to see if our model violates the usual conditions for valid inference. The residuals vs. fitted plot checks linearity and equal variance: we want the residuals scattered randomly around zero with no clear curve and roughly the same vertical spread across the range of fitted values (a funnel shape indicates heteroscedasticity). 
+The following two graphs are checking key regression assumptions to see if our model violates the conditions of linearity, normality, and equal variance. The residuals vs. fitted plot checks linearity and equal variance: we want the residuals scattered randomly around zero with no clear curve and roughly the same vertical spread across the range of fitted values (a funnel shape indicates heteroscedasticity).
 
 ```{r}
 # Checking Linearity and Equal Variance
@@ -207,7 +204,6 @@ ggplot(mlm_model_untransformed |> augment(), aes(x = .fitted, y = .resid))+
     theme(plot.title = element_text(hjust = 0.5, face = "bold"))
 
 ```
-
 
 ```{r}
 # Checking for the normality condition
@@ -228,11 +224,8 @@ summary(mlm_model)
 
 ```
 
-
 $$E[log(wage)|Education,Experience,Race,Region]= \beta_0 + \beta_1Education \\+ \beta_2Experience+ \beta_3Race +
 \beta_4NorthEast +\beta_5South + \beta_6West \\+ \beta_7Race*NorthEast + \beta_8Race*South \beta_9Race*West$$
-
-
 
 ```{r}
 #Prettifying it 
@@ -266,7 +259,6 @@ mlm_model |>
     theme(plot.title = element_text(hjust = 0.5, face = "bold"))
 ```
 
-
 Untransformed model: the residuals vs fitted plot had a clear pattern that the residuals followed showing that there was no random scattering for the residuals. This indicates that the residuals got larger as fitted values increased. In addition, a few points stuck way above the rest clearly showing that the residuals were not centered at zero. The Q–Q plot showed a strong right‑side hook, meaning the residuals had a heavy right tail. It's important to point out that the residuals that fell above the refernce line were big numbers. In summary, the errors were uneven and skewed, so the model was being pulled by a few very large wages.
 
 Transformed model (log Wage): the residuals vs fitted plot now looks evenly distributed with residuals centered on zero with similar spread across fitted values (no obvious shape pattern). The Q–Q plot is also much closer to the straight line, so residuals are more like a Normal distribution. With these improvements our transformed model now meets the usual regression assumptions (linearity, equal variance, normality). With our model now better fitted we can now move on to proofing our research question.
@@ -281,16 +273,16 @@ flextable(wages_reduced_df)|>
   theme_apa()
 
 ```
-### Conducting the hypothesis test 
 
-For conducting the hypothesis test we will use the nested F test method. 
+### Conducting the hypothesis test
 
-The full model contains $9$ predictor terms and the reduced model  contains $6$ predictors. So our extra term is $8-6$ = 3 terms. 
+For conducting the hypothesis test we will use the nested F test method.
 
-$H_0 : \beta_j = 0$ for all $3$ predictor terms being dropped from the full model.
-$H_A : \beta_j \neq 0$ for at least one of the $3$ predictor terms being dropped from the full model. 
+The full model contains $9$ predictor terms and the reduced model contains $6$ predictors. So our extra term is $8-6$ = 3 terms.
 
-The significance level(\alpha) for this test is $0.05$. 
+$H_0 : \beta_j = 0$ for all $3$ predictor terms being dropped from the full model. $H_A : \beta_j \neq 0$ for at least one of the $3$ predictor terms being dropped from the full model.
+
+The significance level(\alpha) for this test is $0.05$.
 
 ```{r ftest-table}
 #Conducting the nested F test
@@ -301,16 +293,11 @@ flextable(anova_df)|>
   autofit()|>
   theme_apa()
 ```
-From the results, the F statistic is $1.145$ and the p-value is 0.23. The Black × Region interaction is not statistically significant because our p = 0.23 > α = 0.05. Therefore we fail to reject the null that the interaction coefficients are zero, and there is no evidence that the Black–non‑Black wage gap differs across the four regions after adjusting for education and experience.
 
-### Analysis 
+From the results, the F statistic is $1.145$ and the p-value is 0.23. The Black × Region interaction is not statistically significant because our p = 0.23 \> α = 0.05. Therefore we fail to reject the null that the interaction coefficients are zero, and there is no evidence that the Black–non‑Black wage gap differs across the four regions after adjusting for education and experience.
 
-#A final summary of your findings and conclusions, as well as a discussion of any limitations of your
-#analysis and conclusions. When you think about possible limitations of your analysis, some questions to
-#consider include: to what population(s) do your results generalize (and is this the population that you
-#are actually most interested in)? Can the associations you describe be #interpreted as cause-and-effect
-#relationships? Are there any lingering assumption violations that you have concerns about?
+### Analysis
 
-From the F-test results in Table @ref(tab:ftest-table), we can see that the test result was not statistically significant. 
+From the F-test results in Table @ref(tab:ftest-table), we can see that the test result was not statistically significant. There is a clear wage gap across the nation that doesn't significantly differ based on region. While Black men in the USA are paid less than Non-Black men, this pay gap is consistent and doesn't expand or shrink regionally. In a lot of the plots, we also saw a difference in which age group participates in the labor force.
 
-
+Some limitations of this analysis are that this data set only represents one month of weekly wages, and doesn't represent seasonal work. The research question also only looks at the wages of men, and doesn't take women and labor that is traditionally performed by women (childcare, caring for elderly family) into account. Another large limitation is that our data only separates individuals into two groups; Black and non-Black which disregards the potential influence of other races, especially in areas that have high populations of Hispanic individuals, for example. This data also only represents wages that were reported to the government, and excludes any shadow work that may have occurred.Finally, the data set used is very old, and we can't use these findings to draw conclusions about the current state of our economy.
