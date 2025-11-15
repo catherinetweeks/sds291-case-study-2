@@ -130,8 +130,10 @@ wages$Black <- relevel(wages$Black, ref = "No")
 We fits a multiple regression model predicting Wage using Education, Experience, Black, Region, and the Black-by-Region interaction. Then prints the summary of the model results.
 
 
-$$E[Wage|Education,Experience,Race,Region]= \beta_0 + \beta_1Education \\+ \beta_2Experience+ \beta_3Race +
-\beta_4NorthEast +\beta_5South + \beta_6West \\+ \beta_7Race*NorthEast + \beta_8Race*South \beta_9Race*West$$
+$$E[Wage|Education,Experience,Race,Region]= \beta_0 + \beta_1Education $$
+$$+ \beta_2Experience+ \beta_3Race +
+\beta_4NorthEast +\beta_5South + \beta_6West $$
+$$+ \beta_7Race*NorthEast + \beta_8Race*South + \beta_9Race*West$$
 
 Here the variables are Wages representing the weekly wages, Education representing years of education, Experience representing years of experience, Race representing whether a respondent was black our reference level here is non black respondents, and Region being split up into  Northeast, Midwest, South, and West with our reference level set as the Midwest.
 
@@ -186,8 +188,10 @@ summary(mlm_model)
 ```
 
 
-$$E[log(wage)|Education,Experience,Race,Region]= \beta_0 + \beta_1Education \\+ \beta_2Experience+ \beta_3Race +
-\beta_4NorthEast +\beta_5South + \beta_6West \\+ \beta_7Race*NorthEast + \beta_8Race*South \beta_9Race*West$$
+$$E[log(Wage)|Education,Experience,Race,Region]= \beta_0 + \beta_1Education $$
+$$+ \beta_2Experience+ \beta_3Race +
+\beta_4NorthEast +\beta_5South + \beta_6West $$
+$$+ \beta_7Race*NorthEast + \beta_8Race*South + \beta_9Race*West$$
 
 
 
@@ -226,6 +230,10 @@ mlm_model |>
 Untransformed model: the residuals vs fitted plot had a clear pattern that the residuals followed showing that there was no random scattering for the residuals. This indicates that the residuals got larger as fitted values increased. In addition, a few points stuck way above the rest clearly showing that the residuals were not centered at zero. The Q–Q plot showed a strong right‑side hook, meaning the residuals had a heavy right tail. It's important to point out that the residuals that fell above the refernce line were big numbers. In summary, the errors were uneven and skewed, so the model was being pulled by a few very large wages.
 
 Transformed model (log Wage): the residuals vs fitted plot now looks evenly distributed with residuals centered on zero with similar spread across fitted values (no obvious shape pattern). The Q–Q plot is also much closer to the straight line, so residuals are more like a Normal distribution. With these improvements our transformed model now meets the usual regression assumptions (linearity, equal variance, normality). With our model now better fitted we can now move on to proofing our research question.
+
+$$E[log(Wage)|Education,Experience,Race,Region]= \beta_0 + \beta_1Education $$
+$$+ \beta_2Experience+ \beta_3Race +
+\beta_4NorthEast +\beta_5South + \beta_6West $$
 
 ```{r, include= FALSE}
 wages_reduced_model <- lm(log(Wage) ~ Education + Experience + Black + Region, data = wages)
