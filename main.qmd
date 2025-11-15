@@ -38,6 +38,9 @@ library(ggplot2)
 library(broom)
 library(flextable)
 library(Sleuth2)
+library(kableExtra)
+install.packages("GGally")
+
 wages <- Sleuth2::ex1029
 wages
 ```
@@ -52,10 +55,19 @@ sum(is.na(wages))
 colSums(is.na(wages))
 ```
 
+
+```{r} 
+wages_summary_table <-summary(wages)
+wages_summary_table
+
+```
+
+
 To further prepare for visualization and modeling, a new categorical variable, `exp_group` was created by grouping `Experience` into four intervals: 0-20 years, 21-40 years, 41-60 years, and 60+ years of experience.
 
-```{r, include=FALSE}
-#Just has the experience group
+
+```{r}
+#Making the exprience years into groups 
 wages_exp_group <- wages |>
   mutate(exp_group = case_when(
     Experience < 21 ~ "0–20",
@@ -64,32 +76,23 @@ wages_exp_group <- wages |>
   
     TRUE     ~ "60+"
   ))
-wages_exp_group
+head(wages_exp_group, 5)   
 ```
 
 To visualize regional differences, we computed the average weekly wage by region and race and the average education level by region and race.
 
-```{r, include=FALSE}
-# Wrangling the data
-#Average wage in each regions by race
+```{r}
+#Grouping the data for region and average wage
 wages_region_avg_wage <- wages |>
   select(Wage, Black, Region) |>
   group_by(Region, Black) |>
   summarise(avg_wage_region = mean(Wage, na.rm = TRUE))|>
   ungroup()
-wages_region_avg_wage
+head(wages_region_avg_wage,5)
 ```
 
-```{r, include=FALSE}
-#EDA Potential 
-# - (Wage and Race)
-# - (Wage by regions)
-# Have a combined plot on that if needed for the research question
-#Need input on the EDA
-```
-
-```{r, include=FALSE}
-#Exp group + region
+```{r}
+#Grouping the data for experience group and region
 wages_exp_group_region <- wages_exp_group |>
   mutate(Race = ifelse(Black == "Yes", "Black", "Non-Black")) |>
   group_by(Region, Race, exp_group) |>
@@ -98,9 +101,8 @@ wages_exp_group_region <- wages_exp_group |>
 
 The visualization below shows how average wages increase with experience across all regions and that Black respondents consistently earn lower wages than non-Black respondents.
 
-```{r, echo= FALSE}
-#Plotting EDA (Exp group and avg wage by race)
-#The region plot looks really condensed 
+```{r}
+#Plotting the experience group variable and avg wage by race
 ggplot(wages_exp_group_region, 
        aes(x = exp_group, y = avg_wage, fill = Race)) +
   geom_col(position = position_dodge(width = 0.7)) +
@@ -109,16 +111,57 @@ ggplot(wages_exp_group_region,
        x = "Experience Group (years)",
        y = "Average Wage") +
   coord_flip() +
-  scale_fill_brewer(palette = "Paired") +
+ scale_fill_manual(values = c("#9BE68E", "#5A63FF"))+
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+```
+
+
+```{r}
+#get averages of education per region
+wages_edu_group_region <- wages |>
+  group_by(Region, Black) |>
+  summarise(avg_education = mean(Education)) |>
+  ungroup()
+```
+```{r, include= FALSE}
+graph.labels <- c("Yes"="Black","No" = "Non-Black")
+```
+```{r}
+#Graph for Average Education by Region and Race, USA
+ggplot(wages_edu_group_region, aes(x = avg_education, y = Region, fill = Black)) +
+  geom_col() +
+  facet_grid(~Black,labeller = labeller(Black = graph.labels) )+
+  labs(
+    title = "Average Education by Region and Race, USA",
+    x = "Average Education (in Years of Schooling)",
+    y = "Region"
+  ) +
+ scale_fill_manual(values = c("#9BE68E", "#5A63FF"))+
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"))+coord_flip()
+```
+
+#plotting a graph exploring Avg pay by region faceted by race
+
+```{r, echo=FALSE}
+#creating new labels for the facet wrapped variables 
+
+wages_region_avg_wage |> ggplot(aes(x=avg_wage_region, y = Region, fill = Black)) + 
+  geom_col()+ 
+  facet_grid(~Black,labeller = labeller(Black = graph.labels) )+
+  coord_flip() +labs(title = "Average Pay in Each USA Region by Race", x= "Average Weekly Wage")+
+  theme_bw() +
+  scale_fill_manual(values = c("#9BE68E", "#5A63FF"))+
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"))+coord_flip()
 ```
 
 #### Preparing for Regression Analysis
 
 Before modeling, we convert the Black and Region columns into categorical variables. The relevel call sets "No" as the baseline group so model coefficients for Black compare other levels to non‑Black respondents.
 
-```{r}
+```{r, include=FALSE}
 #factoring the categorical variables in the wage data set
 wages$Black <- factor(wages$Black)
 wages$Region <- factor(wages$Region)
@@ -129,6 +172,7 @@ wages$Black <- relevel(wages$Black, ref = "No")
 
 We fits a multiple regression model predicting Wage using Education, Experience, Black, Region, and the Black-by-Region interaction. Then prints the summary of the model results.
 
+```{r}
 
 $$E[Wage|Education,Experience,Race,Region]= \beta_0 + \beta_1Education \\+ \beta_2Experience+ \beta_3Race +
 \beta_4NorthEast +\beta_5South + \beta_6West \\+ \beta_7Race*NorthEast + \beta_8Race*South \beta_9Race*West$$
@@ -139,9 +183,7 @@ Here the variables are Wages representing the weekly wages, Education representi
 #MLM model
 mlm_model_untransformed <- lm(Wage ~ Education  + Experience + Black * Region, data = wages)
 summary(mlm_model_untransformed)
-```
 
-```{r, echo=FALSE}
 #Prettifying it by adding tables : Making it a data frame first to table it
 mlm_untransformed_df <- tidy(mlm_model_untransformed, conf.int = TRUE)
 flextable(mlm_untransformed_df)|>
@@ -149,6 +191,7 @@ flextable(mlm_untransformed_df)|>
   autofit()|>
   theme_apa()
 ```
+
 
 The following two graphs are checking key regression assumptions to see if our model violates the usual conditions for valid inference. The residuals vs. fitted plot checks linearity and equal variance: we want the residuals scattered randomly around zero with no clear curve and roughly the same vertical spread across the range of fitted values (a funnel shape indicates heteroscedasticity). 
 
@@ -178,7 +221,7 @@ mlm_model_untransformed |>
 
 The Q–Q plot checks whether the residuals are approximately Normal: points should lie close to the reference line; If points pull away from the line, it suggests the residuals aren’t following a normal pattern. That matters because our standard errors, confidence intervals, and p-values assume normal residuals. Therefore, if the assumption is false, those numbers can be misleading. Thus, we will perform log transformation on our response variable in our case will be the Wage.
 
-```{r, echo= FALSE}
+```{r}
 #MLM model with log scaled y axis
 mlm_model <- lm(log(Wage) ~ Education  + Experience + Black * Region, data = wages)
 summary(mlm_model)
@@ -198,6 +241,7 @@ flextable(mlm_transformed_df)|>
   set_caption("Regression Summary of the Transformed Model: Predicting Wage")|>
   autofit()|>
   theme_apa()
+
 ```
 
 ```{r}
@@ -227,26 +271,21 @@ Untransformed model: the residuals vs fitted plot had a clear pattern that the r
 
 Transformed model (log Wage): the residuals vs fitted plot now looks evenly distributed with residuals centered on zero with similar spread across fitted values (no obvious shape pattern). The Q–Q plot is also much closer to the straight line, so residuals are more like a Normal distribution. With these improvements our transformed model now meets the usual regression assumptions (linearity, equal variance, normality). With our model now better fitted we can now move on to proofing our research question.
 
-```{r, include= FALSE}
+```{r}
 wages_reduced_model <- lm(log(Wage) ~ Education + Experience + Black + Region, data = wages)
 summary(wages_reduced_model)
-
-```
-
-```{r, echo=FALSE}
 wages_reduced_df <- tidy(wages_reduced_model, conf.int = TRUE)
 flextable(wages_reduced_df)|>
   set_caption("Regression Summary of the Reduced Model: Predicting Wage")|>
   autofit()|>
   theme_apa()
+
 ```
 
-```{r}
+The full model contains $8$ predictor terms and the reduced model  contains $6$ predictors.
+
+```{r ftest-table}
 f_results <- anova(wages_reduced_model,mlm_model)
-f_results
-```
-
-```{r}
 anova_df <- as.data.frame(f_results)
 flextable(anova_df)|>
   set_caption("F-test Result Summary")|>
@@ -254,58 +293,20 @@ flextable(anova_df)|>
   theme_apa()
 ```
 
-```{r}
-#creating new labels for the facet wrapped variables 
-graph.labels <- c("Yes"="Black","No" = "Non-Black")
-
-#plotting a graph exploring Avg pay by region faceted by race
-wages_region_avg_wage |> ggplot(aes(x=avg_wage_region, y = Region, fill = Black)) + 
-  geom_col()+ 
-  facet_grid(~Black,labeller = labeller(Black = graph.labels) )+
-  coord_flip() +labs(title = "Average Pay in Each USA Region by Race", x= "Average Weekly Wage")+
-  theme_bw()
-```
 
 #Region does not affect wages in races --\> then the question is not if race affects wage, it is if region affects the wage gap
 
-```{r}
-library(knitr)
-#Saving summary table of wages data
-wages_summary <-summary(wages)
-wages_df <- as.data.frame(wages_summary)
+
+#Leftover work for Saturday : 
+- Writing the hypothesis test 
+- Analysis 
+
+#A final summary of your findings and conclusions, as well as a discussion of any limitations of your
+#analysis and conclusions. When you think about possible limitations of your analysis, some questions to
+#consider include: to what population(s) do your results generalize (and is this the population that you
+#are actually most interested in)? Can the associations you describe be #interpreted as cause-and-effect
+#relationships? Are there any lingering assumption violations that you have concerns about?
+
+From the F-test results in Table @ref(tab:ftest-table), we can see that the
 
 
-#printing the summary table created above with captions.
-#flextable(wages_df)|>
-  #set_caption("Wage Summary")|>
-  #autofit()|>
-  #theme_apa()
-```
-
-Graph for Average Education by Region and Race, USA
-
-```{r}
-
-#get averages of education per region
-wages_edu_group_region <- wages |>
-  group_by(Region, Black) |>
-  summarise(avg_education = mean(Education)) |>
-  ungroup()
-
-graph.labels <- c("Yes"="Black","No" = "Non-Black")
-
-ggplot(wages_edu_group_region, aes(x = avg_education, y = Region, fill = Black)) +
-  geom_col() +
-  facet_grid(~Black,labeller = labeller(Black = graph.labels) )+
-  labs(
-    title = "Average Education by Region and Race, USA",
-    x = "Average Education (in Years of Schooling)",
-    y = "Region"
-  ) +
-  theme_bw() +
-  theme(
-    plot.title = element_text(hjust = 0.5, face = "bold"),
-    axis.line.y = element_blank(),
-    axis.line.x = element_blank(),
-  ) + coord_flip()
-```
