@@ -21,6 +21,8 @@ Radiah Khan · Catherine Weeks · Mercer Mercer · Nafisa Mohammad
 
 
 ## Introduction
+The United States Census Bureau, starting in 1940, has conducted a monthly survey of the labor force known as the Current Population Survey (CPS). The CPS is used to provide current estimates of the economic status. In this Case Study, we aim to address the question. First, were Black males paid less than non-Black males in the same region, with the same levels of education and experience? The motivation behind this question is to determine how racial inequality in the labor force is reflected in wage gaps across the US.
+
 
 ## Data Description
 
@@ -172,8 +174,6 @@ wages$Black <- relevel(wages$Black, ref = "No")
 
 We fits a multiple regression model predicting Wage using Education, Experience, Black, Region, and the Black-by-Region interaction. Then prints the summary of the model results.
 
-```{r}
-
 $$E[Wage|Education,Experience,Race,Region]= \beta_0 + \beta_1Education \\+ \beta_2Experience+ \beta_3Race +
 \beta_4NorthEast +\beta_5South + \beta_6West \\+ \beta_7Race*NorthEast + \beta_8Race*South \beta_9Race*West$$
 
@@ -281,10 +281,19 @@ flextable(wages_reduced_df)|>
   theme_apa()
 
 ```
+### Conducting the hypothesis test 
 
-The full model contains $8$ predictor terms and the reduced model  contains $6$ predictors.
+For conducting the hypothesis test we will use the nested F test method. 
+
+The full model contains $9$ predictor terms and the reduced model  contains $6$ predictors. So our extra term is $8-6$ = 3 terms. 
+
+$H_0 : \beta_j = 0$ for all $3$ predictor terms being dropped from the full model.
+$H_A : \beta_j \neq 0$ for at least one of the $3$ predictor terms being dropped from the full model. 
+
+The significance level(\alpha) for this test is $0.05$. 
 
 ```{r ftest-table}
+#Conducting the nested F test
 f_results <- anova(wages_reduced_model,mlm_model)
 anova_df <- as.data.frame(f_results)
 flextable(anova_df)|>
@@ -292,14 +301,9 @@ flextable(anova_df)|>
   autofit()|>
   theme_apa()
 ```
+From the results, the F statistic is $1.145$ and the p-value is 0.23. The Black × Region interaction is not statistically significant because our p = 0.23 > α = 0.05. Therefore we fail to reject the null that the interaction coefficients are zero, and there is no evidence that the Black–non‑Black wage gap differs across the four regions after adjusting for education and experience.
 
-
-#Region does not affect wages in races --\> then the question is not if race affects wage, it is if region affects the wage gap
-
-
-#Leftover work for Saturday : 
-- Writing the hypothesis test 
-- Analysis 
+### Analysis 
 
 #A final summary of your findings and conclusions, as well as a discussion of any limitations of your
 #analysis and conclusions. When you think about possible limitations of your analysis, some questions to
@@ -307,6 +311,6 @@ flextable(anova_df)|>
 #are actually most interested in)? Can the associations you describe be #interpreted as cause-and-effect
 #relationships? Are there any lingering assumption violations that you have concerns about?
 
-From the F-test results in Table @ref(tab:ftest-table), we can see that the
+From the F-test results in Table @ref(tab:ftest-table), we can see that the test result was not statistically significant. 
 
 
