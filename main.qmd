@@ -20,21 +20,15 @@ execute:
   warning: false
 ---
 
-
-
 ## Introduction
-The United States Census Bureau, starting in 1940, has conducted a monthly survey of the labor force known as the Current Population Survey (CPS). The CPS is used to provide current estimates of the economic status. In this Case Study, we aim to address the question. Were Black males paid less than non-Black males in the same region, with the same levels of education and experience? The motivation behind this question is to determine how racial inequality in the labor force is reflected in wage gaps across the regions in the US.
 
+The United States Census Bureau, starting in 1940, has conducted a monthly survey of the labor force known as the Current Population Survey (CPS). The CPS is used to provide current estimates of the economic status. In this Case Study, we aim to address the question. Were Black males paid less than non-Black males in the same region, with the same levels of education and experience? The motivation behind this question is to determine how racial inequality in the labor force is reflected in wage gaps across the regions in the US.
 
 ## Data Description
 
 In this case study, we are working with the ex1029 data set available in the Sleuth2 library. This data set represents a sample of 25,632 male respondents to the March 1988 U.S. Current Population Survey that is administered monthly by the U.S. Census Bureau. The variables include:
 
--`Wage` Weekly wage in 1992 USD
--`Education` Years of education
--`Experience` Years of work experience
--`Black` Indicator of whether the respondent was black (yes or no)
--`Region` Region of residence (Northeast, Midwest, South or West)
+\-`Wage` Weekly wage in 1992 USD -`Education` Years of education -`Experience` Years of work experience -`Black` Indicator of whether the respondent was black (yes or no) -`Region` Region of residence (Northeast, Midwest, South or West)
 
 ```{r, include= FALSE}
 options(repos = c(CRAN = "https://cloud.r-project.org"))
@@ -46,13 +40,13 @@ library(Sleuth2)
 library(kableExtra)
 install.packages("GGally")
 ```
+
 ```{r, include= FALSE}
 wages <- Sleuth2::ex1029
 wages
 ```
 
 \pagebreak
-
 
 ### Data Wrangling
 
@@ -64,10 +58,9 @@ sum(is.na(wages))
 colSums(is.na(wages))
 ```
 
+To further prepare for visualization and modeling, we created new variables.
 
-To further prepare for visualization and modeling, we created new variables. 
-
-##### Experience Group 
+##### Experience Group
 
 A categorical variable `exp_group` was created by grouping Experience into four intervals:
 
@@ -77,7 +70,6 @@ A categorical variable `exp_group` was created by grouping Experience into four 
 \item For people with less than 61 years of experience: 41--60
 \item For people with more than 60 years of experience: 60+
 \end{itemize}
-
 
 ```{r}
 #Making the experience years into groups 
@@ -93,23 +85,9 @@ head(wages_exp_group, 5)
 
 \pagebreak
 
-##### Average Wage by Region
-
-A numerical variable avg_wage_region was created to group the dataset by Region and Race and calculate the mean weekly wages among these groups. We created this variable to visualize regional differences in mean weekly wage among Black and Non-black male individuals. 
-
-```{r}
-#Grouping the data for region and average wage
-wages_region_avg_wage <- wages |>
-select(Wage, Black, Region) |>
-group_by(Region, Black) |>
-summarise(avg_wage_region = mean(Wage, na.rm = TRUE))|>
-ungroup()
-head(wages_region_avg_wage,5)
-```
-
 ##### Average Wage by Experience Group and Region
 
-A numerical variable `avg_wage_exp` was created to group the dataset by Region, Race and Experience Group and calculate the mean weekly wages among these groups. 
+A numerical variable `avg_wage_exp` was created to group the dataset by Region, Race and Experience Group and calculate the mean weekly wages among these groups.
 
 ```{r}
 #Grouping the data for experience group and region
@@ -122,7 +100,7 @@ head(wages_exp_group_region,5)
 
 ##### Average Years of Education by Race and Region
 
-A numerical variable `avg_education` was created to group the Race and Region group and calculate their average years of education. 
+A numerical variable `avg_education` was created to group the Race and Region group and calculate their average years of education.
 
 ```{r}
 wages_edu_group_region <- wages |>
@@ -132,21 +110,27 @@ ungroup()
 head(wages_edu_group_region,5)
 ```
 
-### Exploratory Data Analysis 
+### Exploratory Data Analysis
 
 Before testing the research question, we conduct an exploratory data analysis on the dataset first using our existing variables and new variables.
 
 To visualize regional differences, we computed the average weekly wage by region and race and the average education level by region and race.
 
+##### Summary of the Dataset
 
-##### Summary of the Dataset 
-```{r} 
+```{r}
 wages_summary_table <-summary(wages)
 wages_summary_table
 
 ```
 
+This summary table shows us that the minimum weekly wage recorded is \$50.39 USD, and the mean is \$640.16 USD. The maximum wage is much higher at \$18777.20 indicating a large variation between wages recorded. The South had the most samples collected, followed by the Midwest, the Northeast, then the West regions.
 
+Across all regions, the mean years of education is 13 years, insinuating that all the samples collected had an average education of high school
+
+In the years of experience variable, there are unusal entries of negative years of experience, which might indicate something in the quality of our data set which we are unable to comment on. If we ignore the negative values, our experience ranges from 9 years to 63 years.
+
+Finally, in the Black variable, we can see the amount of people sampled who were black is far less than the non-black population in the sample.
 
 ##### Average Weekly Wage By Experience Group Among Races
 
@@ -156,20 +140,23 @@ ggplot(wages_exp_group_region,
 aes(x = exp_group, y = avg_wage_exp, fill = Race)) +
 geom_col(position = position_dodge(width = 0.7)) +
 facet_wrap(~ Region) +
-labs(title = "Average Wage by Experience Group among Races",
+labs(title = "Average Weekly Wage by Experience Group among Races",
 x = "Experience Group (years)",
-y = "Average Wage") +
+y = "Average Wage Weekly, USD") +
 coord_flip() +
  scale_fill_manual(values = c("#9BE68E", "#5A63FF"))+
 theme_minimal() +
 theme(plot.title = element_text(hjust = 0.5, face = "bold"))
 ```
 
+The plot above shows that only the South region has samples of individuals with over 60 years of experience. Within the same experience groups, we can see that Black men had lower weekly wage on average compared to non-Black men which is consistent across all regions.
 
 ##### Average Years of Education by Region and Race
+
 ```{r, include= FALSE}
 graph.labels <- c("Yes"="Black","No" = "Non-Black")
 ```
+
 ```{r}
 #Plot
 ggplot(wages_edu_group_region, aes(x = avg_education, y = Region, fill = Black)) +
@@ -184,25 +171,7 @@ theme_minimal() +
 theme(plot.title = element_text(hjust = 0.5, face = "bold"))+coord_flip()
 ```
 
-##### Average Weekly Wage by Region and Race
-
-```{r, echo=FALSE}
-#creating new labels for the facet wrapped variables 
-
-wages_region_avg_wage |> ggplot(aes(x=avg_wage_region, y = Region, fill = Black)) + 
-geom_col()+ 
-facet_grid(~Black,labeller = labeller(Black = graph.labels) )+
-coord_flip() +labs(title = "Average Pay in Each USA Region by Race", x= "Average Weekly Wage")+
-theme_bw() +
-scale_fill_manual(values = c("#9BE68E", "#5A63FF"))+
-theme_minimal() +
-theme(plot.title = element_text(hjust = 0.5, face = "bold"))+coord_flip()
-```
-
-
-
-The plots show how average wages increase with experience across all regions and that Black respondents consistently earn lower wages than non-Black respondents.
-
+This plot shows that there are only slight differences in average years of education regionally. The one area of the plot that stands out is in the West, Black individuals have a higher ratio of average years of education compared to their non-Black counterparts, which stands out slightly from other regions.
 
 #### Preparing for Regression Analysis
 
@@ -219,8 +188,7 @@ wages$Black <- relevel(wages$Black, ref = "No")
 
 We fit a multiple regression model predicting Wage using Education, Experience, Black, Region, and the Black-by-Region interaction. Then prints the summary of the model results.
 
-$$E[Wage|Education,Experience,Race,Region]= \beta_0 + \beta_1Education $$ $$+ \beta_2Experience+ \beta_3Race +$$
-$$\beta_4NorthEast +\beta_5South + \beta_6West +$$ $$\beta_7Race*NorthEast + \beta_8Race*South + \beta_9Race*West$$
+$$E[Wage|Education,Experience,Race,Region]= \beta_0 + \beta_1Education $$ $$+ \beta_2Experience+ \beta_3Race +$$ $$\beta_4NorthEast +\beta_5South + \beta_6West +$$ $$\beta_7Race*NorthEast + \beta_8Race*South + \beta_9Race*West$$
 
 Here the variables are Wages representing the weekly wages, Education representing years of education, Experience representing years of experience, Race representing whether a respondent was black our reference level here is non black respondents, and Region being split up into Northeast, Midwest, South, and West with our reference level set as the Midwest.
 
@@ -271,8 +239,7 @@ summary(mlm_model)
 
 ```
 
-$$E[log(wage)|Education,Experience,Race,Region]= \beta_0 + \beta_1Education $$
-$$+ \beta_2Experience+ \beta_3Race +
+$$E[log(wage)|Education,Experience,Race,Region]= \beta_0 + \beta_1Education $$ $$+ \beta_2Experience+ \beta_3Race +
 \beta_4NorthEast +\beta_5South + \beta_6West $$$$+ \beta_7Race*NorthEast + \beta_8Race*South \beta_9Race*West$$
 
 ```{r}
